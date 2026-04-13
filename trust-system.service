@@ -1,0 +1,20 @@
+[Unit]
+Description=信托管理系统
+After=network.target
+
+[Service]
+Type=simple
+User=admin
+Group=admin
+WorkingDirectory=/home/admin/openclaw/workspace/trust-system
+Environment="PATH=/usr/bin:/home/admin/.local/bin"
+ExecStart=/usr/bin/python3 /home/admin/openclaw/workspace/trust-system/app.py
+Restart=always
+RestartSec=10
+
+# 安全设置
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
