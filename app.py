@@ -1,18 +1,16 @@
 """
 信托管理系统 - 主应用
-支持手机号 + 验证码登录
 """
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from models import db, User, TrustData
+from models import db, User, TrustData, get_database_url
 from datetime import datetime, timedelta
-import pandas as pd
 import os
 import random
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'trust-system-secret-key-2026'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///trust.db'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'trust-system-secret-key-2026')
+app.config['SQLALCHEMY_DATABASE_URI'] = get_database_url()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
@@ -23,6 +21,20 @@ login_manager.login_view = 'login'
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+# 初始化数据库
+def init_db():
+    with app.app_context():
+        db.create_all()
+        # 如果没有任何用户，创建管理员账号
+        if not User.query.first():
+            admin = User(username='15382303557', phone='15382303557', name='裘宇轩', employee_no='admin', role='admin')
+            admin.set_password('admin123')
+            db.session.add(admin)
+            db.session.commit()
+            print('✅ 管理员账号已创建')
+
+init_db()
 
 # ============ 认证路由 ============
 
@@ -45,33 +57,6 @@ def login():
             flash('密码错误', 'danger')
     
     return render_template('login.html')
-
-@app.route('/send-code', methods=['POST'])
-def send_code():
-    """发送验证码"""
-    phone = request.form.get('phone', '').replace('+86', '').replace(' ', '').replace('-', '')
-    
-    if len(phone) != 11 or not phone.startswith('1'):
-        return jsonify({'success': False, 'message': '手机号格式不正确'})
-    
-    user = User.query.filter_by(phone=phone).first()
-    if not user:
-        return jsonify({'success': False, 'message': '该手机号未注册'})
-    
-    # 生成 6 位验证码
-    code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-    user.verify_code = code
-    user.verify_code_expires = datetime.utcnow() + timedelta(minutes=5)
-    db.session.commit()
-    
-    # 实际生产中这里应该发送短信，现在只在日志中打印
-    print(f"验证码已生成 - 手机号：{phone}, 验证码：{code}")
-    
-    return jsonify({
-        'success': True,
-        'message': f'验证码已生成（测试环境）：{code}',
-        'code': code  # 测试环境直接返回验证码
-    })
 
 @app.route('/logout')
 @login_required
@@ -100,7 +85,7 @@ def dashboard():
         record = TrustData.query.filter_by(employee_no=current_user.employee_no).first()
         return render_template('employee_dashboard.html', record=record)
 
-# ============ 管理员 - 用户管理 ============
+# ============ 用户管理 ============
 
 @app.route('/admin/users')
 @login_required
@@ -115,8 +100,8 @@ def admin_users():
         query = query.filter(
             db.or_(
                 User.name.contains(search),
-                User.employee_no.contains(search),
-                User.phone.contains(search)
+                User.phone.contains(search),
+                User.employee_no.contains(search)
             )
         )
     users = query.order_by(User.created_at.desc()).all()
@@ -145,7 +130,7 @@ def admin_user_add():
         return redirect(url_for('admin_users'))
     return render_template('user_form.html', user=None)
 
-# ============ 管理员 - 数据管理 ============
+# ============ 数据管理 ============
 
 @app.route('/admin/data')
 @login_required
@@ -177,6 +162,8 @@ def admin_data():
                          total_exercised=total_exercised, total_sold=total_sold,
                          total_cash=total_cash)
 
+# ============ 数据导入 ============
+
 @app.route('/admin/import', methods=['GET', 'POST'])
 @login_required
 def admin_import():
@@ -202,6 +189,7 @@ def admin_import():
             try:
                 if import_type == 'trust':
                     # 导入信托数据
+                    import pandas as pd
                     df = pd.read_excel(filepath)
                     count = 0
                     skipped = 0
@@ -230,7 +218,6 @@ def admin_import():
                         record.remaining_sellable = row.get('行权可卖股数') if pd.notna(row.get('行权可卖股数')) else None
                         record.allocated_cash = row.get('累计分配金额') if pd.notna(row.get('累计分配金额')) else None
                         record.lock_period = str(row.get('锁定期')) if pd.notna(row.get('锁定期')) else None
-                        record.import_batch = batch_name
                         count += 1
                     
                     db.session.commit()
@@ -238,6 +225,7 @@ def admin_import():
                 
                 elif import_type == 'employees':
                     # 导入员工账号
+                    import pandas as pd
                     df = pd.read_excel(filepath)
                     count = 0
                     for _, row in df.iterrows():
@@ -265,22 +253,45 @@ def admin_import():
             except Exception as e:
                 flash(f'导入失败：{str(e)}', 'danger')
             finally:
-                os.remove(filepath)
+                if os.path.exists(filepath):
+                    os.remove(filepath)
             
             return redirect(url_for('admin_import'))
     
     return render_template('import.html', trust_count=trust_count, user_count=user_count, 
                          admin_count=admin_count, batch_name=batch_name)
+
+# ============ 修改密码 ============
+
+@app.route('/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    if request.method == 'POST':
+        old_password = request.form.get('old_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if not current_user.check_password(old_password):
+            flash('原密码错误', 'danger')
+            return render_template('change_password.html')
+        
+        if len(new_password) < 6:
+            flash('密码长度至少 6 位', 'danger')
+            return render_template('change_password.html')
+        
+        if new_password != confirm_password:
+            flash('两次输入的密码不一致', 'danger')
+            return render_template('change_password.html')
+        
+        current_user.set_password(new_password)
+        db.session.commit()
+        flash('✓ 密码修改成功', 'success')
+        return redirect(url_for('dashboard'))
     
-    return render_template('import.html')
+    return render_template('change_password.html')
 
-# ============ 初始化 ============
-
-def init_db():
-    with app.app_context():
-        db.create_all()
-        print('数据库初始化完成')
+# Vercel 部署入口
+handler = app
 
 if __name__ == '__main__':
-    init_db()
     app.run(debug=True, host='0.0.0.0', port=5001)
