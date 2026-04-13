@@ -290,6 +290,26 @@ def change_password():
     
     return render_template('change_password.html')
 
+# ============ 初始化 API ============
+
+@app.route('/api/init')
+def init_data():
+    """初始化管理员账号"""
+    with app.app_context():
+        db.create_all()
+        
+        # 检查是否已有管理员
+        admin = User.query.filter_by(phone='15382303557').first()
+        if not admin:
+            admin = User(username='15382303557', phone='15382303557', name='裘宇轩', 
+                        employee_no='admin', role='admin')
+            admin.set_password('V^!y3#Ip2i')
+            db.session.add(admin)
+            db.session.commit()
+            return jsonify({'status': 'success', 'message': '管理员账号已创建'})
+        else:
+            return jsonify({'status': 'exists', 'message': '管理员账号已存在'})
+
 # Vercel 部署入口
 handler = app
 
