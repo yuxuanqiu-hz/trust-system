@@ -298,17 +298,29 @@ def init_data():
     with app.app_context():
         db.create_all()
         
-        # 检查是否已有管理员
-        admin = User.query.filter_by(phone='15382303557').first()
-        if not admin:
-            admin = User(username='15382303557', phone='15382303557', name='裘宇轩', 
-                        employee_no='admin', role='admin')
-            admin.set_password('V^!y3#Ip2i')
-            db.session.add(admin)
-            db.session.commit()
-            return jsonify({'status': 'success', 'message': '管理员账号已创建'})
-        else:
-            return jsonify({'status': 'exists', 'message': '管理员账号已存在'})
+        # 删除旧管理员
+        User.query.filter_by(phone='15382303557').delete()
+        User.query.filter_by(phone='15381150723').delete()
+        
+        # 创建新管理员 - 裘宇轩
+        admin = User(username='15382303557', phone='15382303557', name='裘宇轩', 
+                    employee_no='admin', role='admin')
+        admin.set_password('admin123')
+        db.session.add(admin)
+        
+        # 创建第二个管理员 - 舒苗
+        admin2 = User(username='15381150723', phone='15381150723', name='舒苗', 
+                     employee_no='admin_sm', role='admin')
+        admin2.set_password('admin123')
+        db.session.add(admin2)
+        
+        db.session.commit()
+        return jsonify({
+            'status': 'success', 
+            'message': '管理员账号已创建',
+            'account1': '15382303557 / admin123',
+            'account2': '15381150723 / admin123'
+        })
 
 # Vercel 部署入口
 handler = app
