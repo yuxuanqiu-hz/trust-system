@@ -209,14 +209,36 @@ def admin_import():
                             record = TrustData(employee_no=emp_no)
                             db.session.add(record)
                         
-                        record.name = str(row.get('姓名', '')) if pd.notna(row.get('姓名')) else None
-                        record.grant_shares = row.get('授予数') if pd.notna(row.get('授予数')) else None
-                        record.valid_vested = row.get('已归属') if pd.notna(row.get('已归属')) else None
-                        record.exercised_shares = row.get('累计行权数') if pd.notna(row.get('累计行权数')) else None
-                        record.sold_shares = row.get('累计出售数') if pd.notna(row.get('累计出售数')) else None
-                        record.remaining_exercisable = row.get('剩余可行权股数') if pd.notna(row.get('剩余可行权股数')) else None
-                        record.remaining_sellable = row.get('行权可卖股数') if pd.notna(row.get('行权可卖股数')) else None
-                        record.allocated_cash = row.get('累计分配金额') if pd.notna(row.get('累计分配金额')) else None
+                        # 字段映射（支持多种列名格式）
+                        record.name = str(row.get('姓名') or row.get('Name') or '') if pd.notna(row.get('姓名') or row.get('Name')) else None
+                        
+                        # 授予数
+                        grant_val = row.get('授予数') or row.get('授予数（股）') or row.get('Grant Shares') or 0
+                        record.grant_shares = grant_val if pd.notna(grant_val) else None
+                        
+                        # 有效已归属
+                        vested_val = row.get('有效已归属') or row.get('已归属') or row.get('Vested Shares') or 0
+                        record.valid_vested = vested_val if pd.notna(vested_val) else None
+                        
+                        # 累计已行权
+                        exercised_val = row.get('累计已行权股数') or row.get('累计行权数') or row.get('Exercised Shares') or 0
+                        record.exercised_shares = exercised_val if pd.notna(exercised_val) else None
+                        
+                        # 累计已出售
+                        sold_val = row.get('累计已出售股数') or row.get('累计出售数') or row.get('Sold Shares') or 0
+                        record.sold_shares = sold_val if pd.notna(sold_val) else None
+                        
+                        # 剩余可行权
+                        rem_exer_val = row.get('剩余可行权股数') or row.get('剩余可行权') or row.get('Remaining Exercisable') or 0
+                        record.remaining_exercisable = rem_exer_val if pd.notna(rem_exer_val) else None
+                        
+                        # 剩余可出售
+                        rem_sell_val = row.get('剩余可出售股数') or row.get('行权可卖股数') or row.get('Remaining Sellable') or 0
+                        record.remaining_sellable = rem_sell_val if pd.notna(rem_sell_val) else None
+                        
+                        # 已分配现金
+                        cash_val = row.get('已分配现金额（HKD）') or row.get('累计分配金额') or row.get('Allocated Cash') or 0
+                        record.allocated_cash = cash_val if pd.notna(cash_val) else None
                         record.lock_period = str(row.get('锁定期')) if pd.notna(row.get('锁定期')) else None
                         count += 1
                     
