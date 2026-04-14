@@ -73,6 +73,7 @@
                                     <th>手机号</th>
                                     <th>工号</th>
                                     <th>角色</th>
+                                    <th>权限</th>
                                     <th>邮箱</th>
                                     <th>密码</th>
                                     <th>操作</th>
@@ -91,6 +92,14 @@
                                         {% else %}
                                             <span class="badge bg-primary">员工</span>
                                         {% endif %}
+                                    </td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('admin_user_edit', id=user.id) }}" class="d-inline">
+                                            <select name="role" class="form-select form-select-sm" onchange="this.form.submit()" style="width: 100px;">
+                                                <option value="user" {{ 'selected' if user.role == 'user' else '' }}>员工</option>
+                                                <option value="admin" {{ 'selected' if user.role == 'admin' else '' }}>管理员</option>
+                                            </select>
+                                        </form>
                                     </td>
                                     <td>{{ user.email or '-' }}</td>
                                     <td>

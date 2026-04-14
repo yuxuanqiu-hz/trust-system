@@ -134,7 +134,7 @@ def admin_user_add():
 @app.route('/admin/users/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def admin_user_edit(id):
-    """编辑用户信息"""
+    """编辑用户信息（包括修改角色）"""
     if current_user.role != 'admin':
         flash('无权限访问', 'danger')
         return redirect(url_for('dashboard'))
@@ -146,12 +146,14 @@ def admin_user_edit(id):
         user.phone = request.form.get('phone')
         user.employee_no = request.form.get('employee_no')
         user.email = request.form.get('email')
-        user.role = request.form.get('role', 'user')
+        user.role = request.form.get('role', 'user')  # 可以修改角色
         
         # 如果提供了新密码，则更新
         new_password = request.form.get('password')
         if new_password and len(new_password) >= 6:
             user.set_password(new_password)
+            user._plain_pwd = new_password
+            set_user_password(user.id, new_password)
             flash('✓ 用户信息已更新，密码已修改', 'success')
         else:
             flash('✓ 用户信息已更新', 'success')

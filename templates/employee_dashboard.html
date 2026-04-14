@@ -9,7 +9,16 @@
     <style>
         body { background-color: #f5f5f5; }
         .navbar { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .card-stat { border-left: 4px solid #3498db; }
+        .card-stat { border-left: 4px solid #3498db; transition: transform 0.2s; }
+        .card-stat:hover { transform: translateY(-5px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .card-stat.blue { border-left-color: #3498db; }
+        .card-stat.green { border-left-color: #2ecc71; }
+        .card-stat.red { border-left-color: #e74c3c; }
+        .card-stat.orange { border-left-color: #f39c12; }
+        .card-stat.purple { border-left-color: #9b59b6; }
+        .card-stat.cyan { border-left-color: #1abc9c; }
+        .stat-value { font-size: 1.8rem; font-weight: bold; color: #2c3e50; }
+        .stat-label { color: #7f8c8d; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -17,7 +26,12 @@
         <span class="navbar-brand"><i class="bi bi-shield-lock"></i> 信托管理系统</span>
         <span class="navbar-text"><i class="bi bi-person-circle"></i> {{ current_user.name }}</span>
         <div class="ms-auto">
-            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm"><i class="bi bi-box-arrow-right"></i> 退出</a>
+            <a href="{{ url_for('change_password') }}" class="btn btn-outline-primary btn-sm me-2">
+                <i class="bi bi-key"></i> 修改密码
+            </a>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-box-arrow-right"></i> 退出
+            </a>
         </div>
     </nav>
     
@@ -25,75 +39,110 @@
         {% if record %}
         <h2 class="mb-4">我的信托数据</h2>
         
+        <!-- 数据卡片 -->
         <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card card-stat shadow-sm">
+            <div class="col-md-4 mb-3">
+                <div class="card card-stat blue shadow-sm">
                     <div class="card-body">
-                        <h6 class="text-muted">授予股数</h6>
-                        <h3>{{ "{:,.0f}".format(record.grant_shares|float) if record.grant_shares else '0' }}</h3>
+                        <div class="stat-label">授予股数</div>
+                        <div class="stat-value">{{ "{:,.0f}".format(record.grant_shares|float) if record.grant_shares else '0' }}</div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card card-stat shadow-sm" style="border-left-color: #2ecc71;">
+            <div class="col-md-4 mb-3">
+                <div class="card card-stat green shadow-sm">
                     <div class="card-body">
-                        <h6 class="text-muted">已归属股数</h6>
-                        <h3>{{ "{:,.0f}".format(record.vested_shares|float) if record.vested_shares else '0' }}</h3>
+                        <div class="stat-label">有效已归属</div>
+                        <div class="stat-value">{{ "{:,.0f}".format(record.valid_vested|float) if record.valid_vested else '0' }}</div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card card-stat shadow-sm" style="border-left-color: #e74c3c;">
+            <div class="col-md-4 mb-3">
+                <div class="card card-stat red shadow-sm">
                     <div class="card-body">
-                        <h6 class="text-muted">归属比例</h6>
-                        <h3>{{ "{:.2%}".format(record.vested_ratio|float) if record.vested_ratio else '0%' }}</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card card-stat shadow-sm" style="border-left-color: #f39c12;">
-                    <div class="card-body">
-                        <h6 class="text-muted">累计收益</h6>
-                        <h3>{{ "{:,.2f}".format(record.total_income|float) if record.total_income else '0' }}</h3>
+                        <div class="stat-label">归属比例</div>
+                        <div class="stat-value">
+                            {% if record.grant_shares and record.valid_vested %}
+                                {{ "{:.2%}".format((record.valid_vested|float) / (record.grant_shares|float)) }}
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">基本信息</h5>
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="card card-stat orange shadow-sm">
+                    <div class="card-body">
+                        <div class="stat-label">累计已行权</div>
+                        <div class="stat-value">{{ "{:,.0f}".format(record.exercised_shares|float) if record.exercised_shares else '0' }}</div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4"><strong>姓名：</strong>{{ record.name }}</div>
-                    <div class="col-md-4"><strong>工号：</strong>{{ record.employee_no }}</div>
-                    <div class="col-md-4"><strong>锁定期：</strong>{{ record.lock_period or '-' }}</div>
+            <div class="col-md-4 mb-3">
+                <div class="card card-stat purple shadow-sm">
+                    <div class="card-body">
+                        <div class="stat-label">累计已出售</div>
+                        <div class="stat-value">{{ "{:,.0f}".format(record.sold_shares|float) if record.sold_shares else '0' }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card card-stat cyan shadow-sm">
+                    <div class="card-body">
+                        <div class="stat-label">已分配现金 (HKD)</div>
+                        <div class="stat-value">{{ "{:,.2f}".format(record.allocated_cash|float) if record.allocated_cash else '0.00' }}</div>
+                    </div>
                 </div>
             </div>
         </div>
         
+        <!-- 剩余数据 -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="card card-stat blue shadow-sm">
+                    <div class="card-body">
+                        <div class="stat-label">剩余可行权股数</div>
+                        <div class="stat-value">{{ "{:,.0f}".format(record.remaining_exercisable|float) if record.remaining_exercisable else '0' }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="card card-stat green shadow-sm">
+                    <div class="card-body">
+                        <div class="stat-label">剩余可出售股数</div>
+                        <div class="stat-value">{{ "{:,.0f}".format(record.remaining_sellable|float) if record.remaining_sellable else '0' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 基本信息 -->
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-white">
-                <h5 class="mb-0">分配信息</h5>
+                <h5 class="mb-0"><i class="bi bi-person"></i> 基本信息</h5>
             </div>
             <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-md-4"><strong>第一次分配：</strong>{{ record.first_exercise_shares or '0' }} 股</div>
-                    <div class="col-md-4"><strong>第二次分配：</strong>{{ record.second_exercise_shares or '0' }} 股</div>
-                    <div class="col-md-4"><strong>累计分配：</strong>{{ record.total_allocated or '0' }} 元</div>
-                </div>
                 <div class="row">
-                    <div class="col-md-4"><strong>剩余可行权：</strong>{{ record.remaining_exercisable or '0' }} 股</div>
-                    <div class="col-md-4"><strong>行权可卖：</strong>{{ record.exercisable_sellable or '0' }} 股</div>
-                    <div class="col-md-4"><strong>合计卖股：</strong>{{ record.total_sell or '0' }} 元</div>
+                    <div class="col-md-4">
+                        <strong>姓名：</strong>{{ record.name or '-' }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>工号：</strong>{{ current_user.employee_no or '-' }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>锁定期：</strong>{{ record.lock_period or '-' }}
+                    </div>
                 </div>
             </div>
         </div>
         
         {% else %}
         <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i> 暂无信托数据记录
+            <i class="bi bi-info-circle"></i> 暂无信托数据，请联系管理员导入数据。
         </div>
         {% endif %}
     </div>
