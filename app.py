@@ -2,7 +2,7 @@
 信托管理系统 - 主应用
 """
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
-from password_store import set_user_password, get_user_password, load_passwords_from_db
+from password_store import set_user_password, get_user_password
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from models import db, User, TrustData, get_database_url
 from datetime import datetime, timedelta
@@ -27,8 +27,6 @@ def load_user(user_id):
 def init_db():
     with app.app_context():
         db.create_all()
-        # 加载密码到内存
-        load_passwords_from_db()
         # 如果没有任何用户，创建管理员账号
         if not User.query.first():
             admin = User(username='15382303557', phone='15382303557', name='裘宇轩', employee_no='admin', role='admin')
@@ -111,9 +109,9 @@ def admin_users():
         )
     users = query.order_by(User.created_at.desc()).all()
     
-    # 为每个用户加载密码
+    # 为每个用户加载密码（使用 getattr 避免属性错误）
     for user in users:
-        user.display_password = get_user_password(user.id)
+        user.display_password = getattr(user, '_plain_pwd', None) or get_user_password(user.id)
     
     return render_template('users.html', users=users, search=search)
 
