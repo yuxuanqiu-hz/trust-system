@@ -96,6 +96,13 @@ def dashboard():
         record = TrustData.query.filter_by(employee_no=current_user.employee_no).first()
         return render_template('employee_dashboard.html', record=record)
 
+# 员工视角仪表盘（供双重角色用户使用）
+@app.route('/my-trust-data')
+@login_required
+def my_trust_data():
+    record = TrustData.query.filter_by(employee_no=current_user.employee_no).first()
+    return render_template('employee_dashboard.html', record=record)
+
 # ============ 用户管理 ============
 
 @app.route('/admin/users')
