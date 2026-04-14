@@ -35,15 +35,7 @@ def load_user(user_id):
 def init_db():
     with app.app_context():
         db.create_all()
-        # 如果没有任何用户，创建管理员账号
-        if not User.query.first():
-            admin = User(username='15382303557', phone='15382303557', name='裘宇轩', employee_no='admin', role='admin')
-            admin.set_password('admin123')
-            admin._plain_pwd = 'admin123'
-            set_user_password(admin.id, 'admin123')
-            db.session.add(admin)
-            db.session.commit()
-            print('✅ 管理员账号已创建')
+        print('✅ 数据库表已创建')
 
 init_db()
 
