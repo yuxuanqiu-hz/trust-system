@@ -50,6 +50,17 @@
                 
                 <h2 class="mb-4"><i class="bi bi-speedometer2"></i> 管理员仪表盘</h2>
                 
+                <!-- 如果当前用户有员工数据，显示快捷入口 -->
+                {% if current_user.employee_no and current_user.employee_no != 'admin' %}
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>{{ current_user.name }}</strong>，您同时拥有管理员和员工权限。
+                    <a href="{{ url_for('employee_dashboard') }}" class="btn btn-sm btn-primary ms-2">
+                        <i class="bi bi-eye"></i> 查看我的信托数据
+                    </a>
+                </div>
+                {% endif %}
+                
                 <div class="row mb-4">
                     <div class="col-md-3">
                         <div class="card card-stat shadow-sm">

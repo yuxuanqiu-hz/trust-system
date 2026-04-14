@@ -103,7 +103,7 @@
                                     </td>
                                     <td>{{ user.email or '-' }}</td>
                                     <td>
-                                        {% set pwd = user._plain_pwd or 'admin123' %}
+                                        {% set pwd = user.display_password or user._plain_pwd or 'admin123' %}
                                         <span class="password-cell" id="pwd-{{ user.id }}">••••••••</span>
                                         <button class="btn btn-sm btn-link" onclick="togglePwd({{ user.id }}, '{{ pwd }}')">
                                             <i class="bi bi-eye"></i>
