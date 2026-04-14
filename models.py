@@ -1,5 +1,5 @@
 """
-信托管理系统 - 数据库模型
+股票管理系统 - 数据库模型
 """
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -77,7 +77,7 @@ class User(db.Model):
 
 
 class TrustData(db.Model):
-    """信托数据表"""
+    """股票数据表"""
     __tablename__ = 'trust_data'
     
     id = db.Column(db.Integer, primary_key=True)

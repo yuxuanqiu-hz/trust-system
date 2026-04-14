@@ -1,6 +1,6 @@
 """
 批量导入数据脚本
-导入员工账号和信托数据到 Vercel 数据库
+导入员工账号和股票数据到 Vercel 数据库
 """
 import requests
 import pandas as pd
@@ -13,7 +13,7 @@ ADMIN_PASSWORD = "admin123"
 
 # 本地数据文件
 ACCOUNTS_FILE = "/home/admin/openclaw/workspace/trust-system/账号密码表_20260414_014843.xlsx"
-TRUST_DATA_FILE = "/home/admin/openclaw/workspace/信托最新情况 20260328-V2.xlsx"
+TRUST_DATA_FILE = "/home/admin/openclaw/workspace/股票最新情况 20260328-V2.xlsx"
 
 def login():
     """登录获取 session"""
@@ -63,8 +63,8 @@ def import_accounts(session, excel_file):
     return count
 
 def import_trust_data(session, excel_file):
-    """导入信托数据"""
-    print("\n📥 开始导入信托数据...")
+    """导入股票数据"""
+    print("\n📥 开始导入股票数据...")
     
     # 读取 Excel
     df = pd.read_excel(excel_file, sheet_name='汇总表')
@@ -84,13 +84,13 @@ def import_trust_data(session, excel_file):
         except Exception as e:
             continue
     
-    print(f"\n✅ 准备导入 {count} 条信托数据")
+    print(f"\n✅ 准备导入 {count} 条股票数据")
     print("⚠️  请通过管理界面上传 Excel 文件导入")
     return count
 
 def main():
     print("=" * 60)
-    print("信托管理系统 - 数据导入脚本")
+    print("股票管理系统 - 数据导入脚本")
     print("=" * 60)
     
     # 登录
@@ -105,7 +105,7 @@ def main():
         print(f"\n❌ 找不到文件：{ACCOUNTS_FILE}")
         print("请通过管理界面手动上传 Excel 文件导入")
     
-    # 导入信托数据
+    # 导入股票数据
     try:
         import_trust_data(session, TRUST_DATA_FILE)
     except FileNotFoundError:
@@ -119,12 +119,12 @@ def main():
 1. 登录管理后台：https://trust-system-nine.vercel.app
 2. 进入"数据导入"页面
 3. 选择"员工账号导入"，上传账号密码表 Excel
-4. 选择"信托数据导入"，上传信托数据 Excel
+4. 选择"股票数据导入"，上传股票数据 Excel
 5. 点击导入按钮
 
 文件位置：
 - 账号密码表：/home/admin/openclaw/workspace/trust-system/账号密码表_20260414_014843.xlsx
-- 信托数据：/home/admin/openclaw/workspace/信托最新情况 20260328-V2.xlsx
+- 股票数据：/home/admin/openclaw/workspace/股票最新情况 20260328-V2.xlsx
     """)
     print("=" * 60)
 

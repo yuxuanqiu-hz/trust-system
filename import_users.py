@@ -9,7 +9,7 @@ from models import User
 import pandas as pd
 
 def import_employees():
-    file_path = '/home/admin/共享文件/曹操出行 - 信托全部员工列表 (2).xlsx'
+    file_path = '/home/admin/共享文件/曹操出行 - 股票全部员工列表 (2).xlsx'
     
     with app.app_context():
         df = pd.read_excel(file_path)

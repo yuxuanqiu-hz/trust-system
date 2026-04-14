@@ -1,5 +1,5 @@
 """
-信托管理系统 - 主应用
+股票管理系统 - 主应用
 """
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 
@@ -278,7 +278,7 @@ def admin_import():
             
             try:
                 if import_type == 'trust':
-                    # 导入信托数据
+                    # 导入股票数据
                     import pandas as pd
                     df = pd.read_excel(filepath)
                     count = 0
@@ -333,7 +333,7 @@ def admin_import():
                         count += 1
                     
                     db.session.commit()
-                    flash(f'✓ 成功导入信托数据 {count} 条，跳过 {skipped} 条', 'success')
+                    flash(f'✓ 成功导入股票数据 {count} 条，跳过 {skipped} 条', 'success')
                 
                 elif import_type == 'employees':
                     # 导入员工账号（修复密码问题）

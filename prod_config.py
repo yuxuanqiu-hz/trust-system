@@ -1,4 +1,4 @@
-# 信托管理系统 - 生产环境配置
+# 股票管理系统 - 生产环境配置
 import os
 
 class Config:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-信托管理系统 - 完整部署脚本
+股票管理系统 - 完整部署脚本
 """
 import sys, os, glob
 sys.path.insert(0, '/home/admin/openclaw/workspace/trust-system')
@@ -12,7 +12,7 @@ import pandas as pd
 
 def deploy():
     print("=" * 60)
-    print("信托管理系统 - 完整部署")
+    print("股票管理系统 - 完整部署")
     print("=" * 60)
     
     with app.app_context():
@@ -90,9 +90,9 @@ def deploy():
         db.session.commit()
         print(f"  ✓ 导入员工：{employee_count} 人")
         
-        # 4. 导入信托数据
-        print("\n[4/4] 导入信托数据...")
-        df_trust = pd.read_excel('/home/admin/共享文件/自建信托系统数据.xlsx')
+        # 4. 导入股票数据
+        print("\n[4/4] 导入股票数据...")
+        df_trust = pd.read_excel('/home/admin/共享文件/自建股票系统数据.xlsx')
         trust_count = 0
         
         for _, row in df_trust.iterrows():
@@ -118,7 +118,7 @@ def deploy():
             trust_count += 1
         
         db.session.commit()
-        print(f"  ✓ 导入信托数据：{trust_count} 条")
+        print(f"  ✓ 导入股票数据：{trust_count} 条")
         
         # 5. 统计
         print("\n" + "=" * 60)
@@ -127,7 +127,7 @@ def deploy():
         print(f"总账号数：{User.query.count()}")
         print(f"  - 管理员：{User.query.filter_by(role='admin').count()} 人")
         print(f"  - 员工：{User.query.filter_by(role='user').count()} 人")
-        print(f"信托数据：{TrustData.query.count()} 条")
+        print(f"股票数据：{TrustData.query.count()} 条")
         print("\n访问地址：http://10.1.16.227:5001")
         print("\n管理员账号：")
         print("  裘宇轩 - 15382303557")
