@@ -35,6 +35,7 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     phone = db.Column(db.String(50), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(256))
+    _password_plain = db.Column(db.String(256))  # 临时存储明文密码（用于显示）
     verify_code = db.Column(db.String(6))
     verify_code_expires = db.Column(db.DateTime)
     employee_no = db.Column(db.String(50), index=True)
@@ -44,6 +45,18 @@ class User(db.Model):
     email = db.Column(db.String(200))
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    @property
+    def _password_plain(self):
+        """获取明文密码（从 session 或默认值）"""
+        from flask import session
+        return session.get(f'pwd_{self.id}', 'admin123')
+    
+    @_password_plain.setter
+    def _password_plain(self, value):
+        """设置明文密码（同时存储到 session）"""
+        from flask import session
+        session[f'pwd_{self.id}'] = value
     
     def get_id(self):
         return str(self.id)

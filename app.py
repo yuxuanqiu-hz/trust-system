@@ -1,7 +1,8 @@
 """
 信托管理系统 - 主应用
 """
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
+from password_store import set_user_password
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from models import db, User, TrustData, get_database_url
 from datetime import datetime, timedelta
@@ -130,6 +131,75 @@ def admin_user_add():
         return redirect(url_for('admin_users'))
     return render_template('user_form.html', user=None)
 
+@app.route('/admin/users/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def admin_user_edit(id):
+    """编辑用户信息"""
+    if current_user.role != 'admin':
+        flash('无权限访问', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    user = User.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        user.name = request.form.get('name')
+        user.phone = request.form.get('phone')
+        user.employee_no = request.form.get('employee_no')
+        user.email = request.form.get('email')
+        user.role = request.form.get('role', 'user')
+        
+        # 如果提供了新密码，则更新
+        new_password = request.form.get('password')
+        if new_password and len(new_password) >= 6:
+            user.set_password(new_password)
+            flash('✓ 用户信息已更新，密码已修改', 'success')
+        else:
+            flash('✓ 用户信息已更新', 'success')
+        
+        db.session.commit()
+        return redirect(url_for('admin_users'))
+    
+    return render_template('user_form.html', user=user)
+
+@app.route('/admin/users/<int:id>/reset-password', methods=['POST'])
+@login_required
+def admin_user_reset_password(id):
+    """管理员重置用户密码"""
+    if current_user.role != 'admin':
+        return jsonify({'success': False, 'message': '无权限'})
+    
+    user = User.query.get_or_404(id)
+    data = request.get_json()
+    new_password = data.get('password', 'admin123')
+    
+    if len(new_password) < 6:
+        return jsonify({'success': False, 'message': '密码长度至少 6 位'})
+    
+    user.set_password(new_password)
+    user._plain_pwd = new_password  # 保存明文密码
+    set_user_password(user.id, new_password)  # 保存到密码存储
+    db.session.commit()
+    
+    return jsonify({'success': True, 'message': '密码已重置'})
+
+@app.route('/admin/users/<int:id>/delete', methods=['POST'])
+@login_required
+def admin_user_delete(id):
+    """删除用户"""
+    if current_user.role != 'admin':
+        flash('无权限访问', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    user = User.query.get_or_404(id)
+    if user.role == 'admin':
+        flash('❌ 不能删除管理员账号', 'danger')
+        return redirect(url_for('admin_users'))
+    
+    db.session.delete(user)
+    db.session.commit()
+    flash('✓ 用户已删除', 'success')
+    return redirect(url_for('admin_users'))
+
 # ============ 数据管理 ============
 
 @app.route('/admin/data')
@@ -246,7 +316,7 @@ def admin_import():
                     flash(f'✓ 成功导入信托数据 {count} 条，跳过 {skipped} 条', 'success')
                 
                 elif import_type == 'employees':
-                    # 导入员工账号
+                    # 导入员工账号（修复密码问题）
                     import pandas as pd
                     df = pd.read_excel(filepath)
                     count = 0
@@ -264,13 +334,32 @@ def admin_import():
                         name = str(row.get('姓名', ''))
                         email = str(row.get('员工邮箱', '')) if pd.notna(row.get('员工邮箱')) else None
                         
-                        if not User.query.filter_by(phone=phone).first():
-                            user = User(username=phone, phone=phone, name=name, employee_no=emp_no, email=email, role='user')
-                            db.session.add(user)
+                        # 获取密码 - 优先使用"初始密码"列
+                        password = str(row.get('初始密码') or row.get('密码') or row.get('Password') or 'admin123')
+                        
+                        with app.app_context():
+                            user = User.query.filter_by(phone=phone).first()
+                            
+                            if user:
+                                # 更新现有用户
+                                user.name = name
+                                user.employee_no = emp_no
+                                user.email = email
+                                user.set_password(password)  # 更新密码
+                                user._plain_pwd = password  # 保存明文密码
+                            else:
+                                # 创建新用户
+                                user = User(username=phone, phone=phone, name=name, employee_no=emp_no, email=email, role='user')
+                                user.set_password(password)
+                                user._plain_pwd = password  # 保存明文密码
+                                db.session.add(user)
+                            
+                            db.session.commit()
+                            # 保存到密码存储
+                            set_user_password(user.id, password)
                             count += 1
                     
-                    db.session.commit()
-                    flash(f'✓ 成功导入员工账号 {count} 人', 'success')
+                    flash(f'✓ 成功导入员工账号 {count} 人，密码已从 Excel 导入', 'success')
             
             except Exception as e:
                 flash(f'导入失败：{str(e)}', 'danger')
