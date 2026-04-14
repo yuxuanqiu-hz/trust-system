@@ -9,7 +9,7 @@
     <style>
         body { background-color: #f5f5f5; }
         .navbar { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .card-stat { border-left: 4px solid #3498db; transition: transform 0.2s; }
+        .card-stat { border-left: 4px solid #3498db; transition: transform 0.2s; margin-bottom: 15px; }
         .card-stat:hover { transform: translateY(-5px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .card-stat.blue { border-left-color: #3498db; }
         .card-stat.green { border-left-color: #2ecc71; }
@@ -17,31 +17,36 @@
         .card-stat.orange { border-left-color: #f39c12; }
         .card-stat.purple { border-left-color: #9b59b6; }
         .card-stat.cyan { border-left-color: #1abc9c; }
-        .stat-value { font-size: 1.8rem; font-weight: bold; color: #2c3e50; }
-        .stat-label { color: #7f8c8d; font-size: 0.9rem; }
+        .stat-value { font-size: 1.5rem; font-weight: bold; color: #2c3e50; }
+        .stat-label { color: #7f8c8d; font-size: 0.85rem; }
+        
+        @media (max-width: 768px) {
+            .stat-value { font-size: 1.2rem; }
+            .card-body { padding: 15px; }
+        }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg mb-4 px-3 py-2">
+    <nav class="navbar navbar-expand-lg mb-3 px-3 py-2">
         <span class="navbar-brand"><i class="bi bi-shield-lock"></i> 信托管理系统</span>
-        <span class="navbar-text"><i class="bi bi-person-circle"></i> {{ current_user.name }}</span>
+        <span class="navbar-text ms-auto"><i class="bi bi-person-circle"></i> {{ current_user.name }}</span>
         <div class="ms-auto">
             <a href="{{ url_for('change_password') }}" class="btn btn-outline-primary btn-sm me-2">
-                <i class="bi bi-key"></i> 修改密码
+                <i class="bi bi-key"></i> <span class="d-none d-sm-inline">修改密码</span>
             </a>
             <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">
-                <i class="bi bi-box-arrow-right"></i> 退出
+                <i class="bi bi-box-arrow-right"></i> <span class="d-none d-sm-inline">退出</span>
             </a>
         </div>
     </nav>
     
     <div class="container">
         {% if record %}
-        <h2 class="mb-4">我的信托数据</h2>
+        <h4 class="mb-3">我的信托数据</h4>
         
         <!-- 数据卡片 -->
-        <div class="row mb-4">
-            <div class="col-md-4 mb-3">
+        <div class="row">
+            <div class="col-6 col-md-4 mb-3">
                 <div class="card card-stat blue shadow-sm">
                     <div class="card-body">
                         <div class="stat-label">授予股数</div>
@@ -49,7 +54,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-6 col-md-4 mb-3">
                 <div class="card card-stat green shadow-sm">
                     <div class="card-body">
                         <div class="stat-label">有效已归属</div>
@@ -57,13 +62,13 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-6 col-md-4 mb-3">
                 <div class="card card-stat red shadow-sm">
                     <div class="card-body">
                         <div class="stat-label">归属比例</div>
                         <div class="stat-value">
                             {% if record.grant_shares and record.valid_vested %}
-                                {{ "{:.2%}".format((record.valid_vested|float) / (record.grant_shares|float)) }}
+                                {{ "{:.1f}%".format((record.valid_vested|float) / (record.grant_shares|float) * 100) }}
                             {% else %}
                                 0%
                             {% endif %}
@@ -73,8 +78,8 @@
             </div>
         </div>
         
-        <div class="row mb-4">
-            <div class="col-md-4 mb-3">
+        <div class="row">
+            <div class="col-6 col-md-4 mb-3">
                 <div class="card card-stat orange shadow-sm">
                     <div class="card-body">
                         <div class="stat-label">累计已行权</div>
@@ -82,7 +87,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-6 col-md-4 mb-3">
                 <div class="card card-stat purple shadow-sm">
                     <div class="card-body">
                         <div class="stat-label">累计已出售</div>
@@ -90,30 +95,30 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-6 col-md-4 mb-3">
                 <div class="card card-stat cyan shadow-sm">
                     <div class="card-body">
                         <div class="stat-label">已分配现金 (HKD)</div>
-                        <div class="stat-value">{{ "{:,.2f}".format(record.allocated_cash|float) if record.allocated_cash else '0.00' }}</div>
+                        <div class="stat-value">{{ "{:,.0f}".format(record.allocated_cash|float) if record.allocated_cash else '0.00' }}</div>
                     </div>
                 </div>
             </div>
         </div>
         
         <!-- 剩余数据 -->
-        <div class="row mb-4">
-            <div class="col-md-6 mb-3">
+        <div class="row">
+            <div class="col-6 mb-3">
                 <div class="card card-stat blue shadow-sm">
                     <div class="card-body">
-                        <div class="stat-label">剩余可行权股数</div>
+                        <div class="stat-label">剩余可行权</div>
                         <div class="stat-value">{{ "{:,.0f}".format(record.remaining_exercisable|float) if record.remaining_exercisable else '0' }}</div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 mb-3">
+            <div class="col-6 mb-3">
                 <div class="card card-stat green shadow-sm">
                     <div class="card-body">
-                        <div class="stat-label">剩余可出售股数</div>
+                        <div class="stat-label">剩余可出售</div>
                         <div class="stat-value">{{ "{:,.0f}".format(record.remaining_sellable|float) if record.remaining_sellable else '0' }}</div>
                     </div>
                 </div>
@@ -127,13 +132,13 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-4">
+                    <div class="col-4 mb-2">
                         <strong>姓名：</strong>{{ record.name or '-' }}
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-4 mb-2">
                         <strong>工号：</strong>{{ current_user.employee_no or '-' }}
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-4 mb-2">
                         <strong>锁定期：</strong>{{ record.lock_period or '-' }}
                     </div>
                 </div>
