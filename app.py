@@ -327,7 +327,7 @@ def admin_import():
                         record.remaining_sellable = rem_sell_val if pd.notna(rem_sell_val) else None
                         
                         # 已分配现金
-                        cash_val = row.get('已分配现金额（HKD）') or row.get('累计分配金额') or row.get('Allocated Cash') or 0
+                        cash_val = row.get('已分配现金额') or row.get('已分配现金额（HKD）') or row.get('累计分配金额') or row.get('Allocated Cash') or 0
                         record.allocated_cash = cash_val if pd.notna(cash_val) else None
                         record.lock_period = str(row.get('锁定期')) if pd.notna(row.get('锁定期')) else None
                         count += 1
