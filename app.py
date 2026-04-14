@@ -2,7 +2,15 @@
 信托管理系统 - 主应用
 """
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
-from password_store import set_user_password, get_user_password
+
+# 全局密码存储
+USER_PASSWORDS = {}
+
+def set_user_password(user_id, password):
+    USER_PASSWORDS[user_id] = password
+
+def get_user_password(user_id):
+    return USER_PASSWORDS.get(user_id, 'admin123')
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from models import db, User, TrustData, get_database_url
 from datetime import datetime, timedelta
@@ -108,10 +116,6 @@ def admin_users():
             )
         )
     users = query.order_by(User.created_at.desc()).all()
-    
-    # 为每个用户加载密码（使用 getattr 避免属性错误）
-    for user in users:
-        user.display_password = getattr(user, '_plain_pwd', None) or get_user_password(user.id)
     
     return render_template('users.html', users=users, search=search)
 
