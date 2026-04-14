@@ -86,12 +86,20 @@ def dashboard():
         total_grant_shares = db.session.query(db.func.sum(TrustData.grant_shares)).scalar() or 0
         total_valid_vested = db.session.query(db.func.sum(TrustData.valid_vested)).scalar() or 0
         recent_users = User.query.order_by(User.created_at.desc()).limit(5).all()
+        
+        # 检查当前管理员是否有员工数据（用于双重角色提示）
+        has_employee_data = False
+        if current_user.employee_no and current_user.employee_no not in ['admin', 'admin_sm']:
+            employee_record = TrustData.query.filter_by(employee_no=current_user.employee_no).first()
+            has_employee_data = employee_record is not None
+        
         return render_template('dashboard.html', 
                              total_users=total_users,
                              total_records=total_records,
                              total_grant_shares=total_grant_shares,
                              total_valid_vested=total_valid_vested,
-                             recent_users=recent_users)
+                             recent_users=recent_users,
+                             has_employee_data=has_employee_data)
     else:
         record = TrustData.query.filter_by(employee_no=current_user.employee_no).first()
         return render_template('employee_dashboard.html', record=record)
